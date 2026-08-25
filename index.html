@@ -709,7 +709,7 @@ async function loadPairs() {
   try {
     resp = await fetch(dataUrl);
   } catch (netErr) {
-    throw new Error(`NETWORK ERROR fetching ${dataUrl} — ${netErr.message}. If the dataset fails to load, ensure the page is served from a host that can reach data/consolidated.jsonl (open the page at its root path).`);
+    throw new Error(`NETWORK ERROR fetching ${dataUrl} — ${netErr.message}. If you are on a phone, you must be on the same network as the server (the data URL is relative to the page; cellular data / a different network cannot reach it).`);
   }
   if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${dataUrl}`);
   const text = await resp.text();
@@ -1263,6 +1263,19 @@ function buildViewer() {
     if (alpha < 0.02) alpha = 0.02;
   }
 
+  function wrapText(text, maxChars) {
+    const words = String(text || '').split(/\s+/);
+    const lines = []; let cur = '';
+    for (const w of words) {
+      if (cur && (cur + ' ' + w).length > maxChars) { lines.push(cur); cur = w; }
+      else cur = cur ? cur + ' ' + w : w;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  function dim(n) { return focusMode && n !== selected && !selectedNeighbors.has(n.id); }
+
   function draw() {
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1335,18 +1348,32 @@ function buildViewer() {
     }
     ctx.globalAlpha = 1;
 
-    // labels
+    // labels — full text for: expanded nodes, the children they revealed,
+    // the selected node, its neighbors, and the hovered node. (No truncation.)
     ctx.fillStyle = '#cdd6e0';
     ctx.font = '10px system-ui, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const MAXLEN = 34;   // characters per wrapped line
     for (const n of nodes) {
       if (n.hidden) continue;
       const p = projMap.get(n.id);
       const r = nodeRadius(n) * (p.s || 1);
       const isSel = n === selected;
       const isNeigh = focusMode && selectedNeighbors.has(n.id);
-      if (isSel || isNeigh || n === hovered || (r >= 6 && !focusMode)) {
-        ctx.fillText(n.label.slice(0, 26), p.X + r + 3, p.Y + 3);
-      }
+      // Show text once a node has been expanded OR it is part of the current focus set.
+      const showFull = expanded.has(n.id) || isSel || isNeigh || n === hovered
+                       || (!focusMode && r >= 6);
+      if (!showFull) continue;
+      const lines = wrapText(n.label, MAXLEN);
+      const lh = 11;
+      const tx = p.X + r + 3;
+      const ty = p.Y;
+      // subtle dark backing so text stays readable over links
+      ctx.save();
+      ctx.globalAlpha = dim(n) ? 0.5 : 1;
+      let yy = ty - (lines.length - 1) * lh / 2;
+      for (const ln of lines) { ctx.fillText(ln, tx, yy); yy += lh; }
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -1927,7 +1954,7 @@ async function main() {
     loading.innerHTML = `
       <div style="color:#ff6b6b;font-weight:500;margin-bottom:8px">Failed to load dataset</div>
       <div style="font-size:12px;color:var(--muted)">${err.message}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">Open the page at its root path (ending in /) and ensure data/consolidated.jsonl is reachable.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">URL must end with a slash: the page path + "/", and the file data/consolidated.jsonl must be reachable from that location.</div>
     `;
     console.error('[CAPS graph] main() failed:', err);
   }
