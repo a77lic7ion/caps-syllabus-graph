@@ -32,8 +32,8 @@
   /* ── Sidebar ─────────────────────────────────────────────────────────── */
   #sidebar {
     width: 260px;
-    min-width: 260px;
-    max-width: 260px;
+    min-width: 220px;
+    max-width: 520px;
     background: var(--panel);
     backdrop-filter: blur(14px);
     border-right: 1px solid var(--panel-border);
@@ -41,10 +41,9 @@
     flex-direction: column;
     padding: 18px 16px;
     overflow: hidden;
-    transition: width 0.25s ease, min-width 0.25s ease, max-width 0.25s ease,
-                padding 0.25s ease, border-color 0.25s ease;
-    z-index: 10;
     position: relative;
+    z-index: 10;
+    transition: border-color 0.25s ease, background 0.25s ease;
   }
   #sidebar.collapsed {
     width: 0;
@@ -115,6 +114,45 @@
   }
   #search:focus { border-color: var(--accent); }
   #search::placeholder { color: var(--muted); }
+
+  /* ── Sidebar resize handle ────────────────────────────────────────────── */
+  #sidebar-resize {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 12;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  #sidebar-resize:hover,
+  #sidebar-resize.dragging {
+    background: rgba(35, 196, 167, 0.25);
+  }
+  #sidebar-resize::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 40px;
+    border-radius: 1px;
+    background: rgba(255,255,255,0.12);
+    transition: background 0.15s, height 0.15s;
+  }
+  #sidebar-resize:hover::after,
+  #sidebar-resize.dragging::after {
+    background: rgba(35, 196, 167, 0.55);
+    height: 56px;
+  }
+  body.sidebar-resizing {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: col-resize;
+  }
 
   .section-label {
     font-size: 10px;
@@ -462,6 +500,7 @@
     <button id="load-graph-btn" style="width:100%;padding:7px 8px;font-size:12px;color:var(--text);background:rgba(35,196,167,0.12);border:1px solid rgba(35,196,167,0.3);border-radius:8px;cursor:pointer;text-align:center;transition:background 0.12s">Load graph for current subject</button>
     <button id="clear-cache-btn" style="width:100%;padding:6px 8px;font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--panel-border);border-radius:8px;cursor:pointer;margin-top:6px;text-align:center;transition:color 0.12s,background 0.12s">Clear localStorage cache</button>
   </div>
+  <div id="sidebar-resize" title="Drag to resize sidebar" aria-label="Resize sidebar"></div>
 </aside>
 
 <!-- ── 3D canvas ───────────────────────────────────────────────────────── -->
@@ -1947,6 +1986,52 @@ async function loadCurrentGraph(forceRebuild = false) {
   renderCacheStatus();
   return filtered;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Sidebar resize via drag on right-edge handle
+ * ────────────────────────────────────────────────────────────────────────── */
+(function () {
+  const handle = document.getElementById('sidebar-resize');
+  const sidebar = document.getElementById('sidebar');
+  if (!handle || !sidebar) return;
+
+  let dragging = false;
+  let startX = 0;
+  let startWidth = 0;
+
+  function onPointerDown(e) {
+    if (sidebar.classList.contains('collapsed')) return;
+    dragging = true;
+    handle.classList.add('dragging');
+    startX = e.clientX;
+    startWidth = sidebar.getBoundingClientRect().width;
+    document.body.classList.add('sidebar-resizing');
+    e.preventDefault();
+  }
+
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const dx = startX - e.clientX;
+    let newWidth = startWidth + dx;
+    // Constrain to min/max widths (must match CSS min-width / max-width)
+    const MIN = 220, MAX = 520;
+    newWidth = Math.max(MIN, Math.min(MAX, newWidth));
+    sidebar.style.width = newWidth + 'px';
+    e.preventDefault();
+  }
+
+  function onPointerUp() {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.classList.remove('sidebar-resizing');
+    sidebar.style.width = '';   // let CSS take back control (keep current pixel width via transition)
+  }
+
+  handle.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+})();
 
 /* ──────────────────────────────────────────────────────────────────────────
  * main()
