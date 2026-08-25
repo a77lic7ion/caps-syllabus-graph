@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CAPS Syllabus Extraction Schema",
+  "description": "Structured syllabus extracted from a CAPS PDF. Designed to POST directly to SmartChalk /api/curriculum-source.",
+  "type": "object",
+  "required": ["documentMeta", "contentAreas", "assessment"],
+  "properties": {
+    "documentMeta": {
+      "type": "object",
+      "required": ["subject", "grade", "phase", "sourcePdf"],
+      "properties": {
+        "subject":       { "type": "string" },
+        "grade":         { "type": "string", "enum": ["1","2","3","R","4","5","6","7","8","9","10","11","12"] },
+        "phase":         { "type": "string", "enum": ["Foundation Phase","Intermediate Phase","Senior Phase","FET"] },
+        "sourcePdf":     { "type": "string" },
+        "language":      { "type": "string", "default": "English" },
+        "versionDate":   { "type": "string" },
+        "publisher":     { "type": "string" }
+      }
+    },
+    "contentAreas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["contentArea", "topics"],
+        "properties": {
+          "contentArea": { "type": "string" },
+          "weighting":   { "type": "string" },
+          "generalFocus":{ "type": "string" },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["topic", "subtopics", "pacing"],
+              "properties": {
+                "topic":      { "type": "string" },
+                "subtopics": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["descriptor"],
+                    "properties": {
+                      "descriptor":   { "type": "string" },
+                      "techniques":   { "type": "array", "items": { "type": "string" } },
+                      "terminology":  { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                },
+                "pacing": {
+                  "type": "object",
+                  "properties": {
+                    "grade1": {
+                      "type": "object",
+                      "properties": {
+                        "term1": { "type": "string" },
+                        "term2": { "type": "string" },
+                        "term3": { "type": "string" },
+                        "term4": { "type": "string" },
+                        "totalLessons": { "type": "string" }
+                      }
+                    },
+                    "grade2": {
+                      "type": "object",
+                      "properties": {
+                        "term1": { "type": "string" },
+                        "term2": { "type": "string" },
+                        "term3": { "type": "string" },
+                        "term4": { "type": "string" },
+                        "totalLessons": { "type": "string" }
+                      }
+                    },
+                    "grade3": {
+                      "type": "object",
+                      "properties": {
+                        "term1": { "type": "string" },
+                        "term2": { "type": "string" },
+                        "term3": { "type": "string" },
+                        "term4": { "type": "string" },
+                        "totalLessons": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "properties": {
+        "informal": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "practices":   { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "formal": {
+          "type": "object",
+          "required": ["tasksPerYear", "tasksPerTerm"],
+          "properties": {
+            "tasksPerYear": { "type": "integer" },
+            "tasksPerTerm": { "type": "integer" },
+            "programme": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["task", "grade", "weighting", "when"],
+                "properties": {
+                  "task":       { "type": "string" },
+                  "grade":      { "type": "string" },
+                  "weighting":  { "type": "string" },
+                  "when":       { "type": "string" },
+                  "method":     { "type": "string" }
+                }
+              }
+            },
+            "recordingAndReporting": { "type": "string" },
+            "moderation":            { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

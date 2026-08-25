@@ -1,0 +1,14 @@
+# Editor / OS
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Local caches / transient
+*.log
+.cache/
+node_modules/
+
+# Don't commit generated derivatives that are reproducible from source-dataset/
+# (data/consolidated.jsonl is committed for convenience, but it is buildable via build_data.py)

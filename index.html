@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>CAPS Syllabus — 3D Knowledge Graph</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --panel: rgba(14, 20, 28, 0.92);
+    --panel-border: rgba(255,255,255,0.08);
+    --text: #e6edf3;
+    --muted: #8b97a6;
+    --accent: #23c4a7;
+    --accent2: #5b8def;
+    --amber: #f0a030;
+    --purple: #c77dff;
+    --red: #ff6b6b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    display: flex;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────────────────────── */
+  #sidebar {
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border-right: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    padding: 18px 16px;
+    overflow: hidden;
+    transition: width 0.25s ease, min-width 0.25s ease, max-width 0.25s ease,
+                padding 0.25s ease, border-color 0.25s ease;
+    z-index: 10;
+    position: relative;
+  }
+  #sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    padding: 0;
+    border-right: none;
+    overflow: hidden;
+  }
+  #sidebar-toggle {
+    position: absolute;
+    top: 50%;
+    right: -14px;
+    transform: translateY(-50%);
+    z-index: 11;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: background 0.15s, color 0.15s, right 0.25s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  #sidebar-toggle:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  #sidebar.collapsed #sidebar-toggle,
+  #sidebar-toggle.collapsed-state {
+    right: 0;
+  }
+  #sidebar-toggle .icon {
+    transition: transform 0.25s ease;
+    display: inline-block;
+  }
+  #sidebar.collapsed ~ #graph-wrap .sidebar-pin {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #brand {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+  }
+  #brand span { color: var(--accent); }
+  #subhead {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+  #search {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-size: 12px;
+    outline: none;
+    margin-bottom: 16px;
+    transition: border-color 0.15s;
+  }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--muted); }
+
+  .section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 12px 0 6px 0;
+    font-weight: 600;
+  }
+  #subject-list { list-style: none; }
+  .subject-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 2px;
+    transition: background 0.12s;
+    border: 1px solid transparent;
+  }
+  .subject-item:hover { background: rgba(255,255,255,0.04); }
+  .subject-item.active {
+    background: rgba(35,196,167,0.12);
+    border-color: rgba(35,196,167,0.3);
+  }
+  .subject-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .subject-name {
+    font-size: 12.5px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .subject-count {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .grade-list {
+    margin-left: 17px;
+    margin-top: 2px;
+    margin-bottom: 4px;
+  }
+  .grade-item {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 2px 0 2px 8px;
+    border-left: 2px solid var(--panel-border);
+    margin-left: 4px;
+    cursor: pointer;
+    transition: color 0.12s;
+  }
+  .grade-item:hover { color: var(--text); }
+  .grade-item.active {
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+  .show-all {
+    margin-top: 8px;
+    padding: 7px 8px;
+    font-size: 12px;
+    color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.12s, color 0.12s;
+  }
+  .show-all:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  #stats {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--panel-border);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  #stats strong { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* ── 3D canvas ───────────────────────────────────────────────────────── */
+  #graph-wrap {
+    flex: 1;
+    position: relative;
+    background: radial-gradient(ellipse at 30% 40%, #0f1722 0%, #080b10 70%);
+    transition: margin-left 0.25s ease;
+  }
+  #graph {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Floating pin button when sidebar collapsed */
+  .sidebar-pin {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, background 0.15s, color 0.15s;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .sidebar-pin:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  #legend {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  #tooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 100;
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    line-height: 1.55;
+    display: none;
+    max-width: 320px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    transform: translate(-50%, -115%);
+    transition: opacity 0.12s;
+  }
+  #tooltip .tt-label {
+    font-weight: 600;
+    margin-bottom: 3px;
+    font-size: 13px;
+  }
+  #tooltip .tt-type {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  #tooltip .tt-row {
+    color: var(--muted);
+    margin-bottom: 3px;
+    font-size: 11.5px;
+  }
+  #tooltip .tt-row strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+  #tooltip .tt-desc {
+    color: var(--purple);
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.45;
+    border-top: 1px solid var(--panel-border);
+    padding-top: 6px;
+  }
+
+  #hint {
+    position: absolute;
+    bottom: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--muted);
+    pointer-events: none;
+    opacity: 0.55;
+    text-align: center;
+    transition: opacity 1s;
+  }
+  #hint.dim { opacity: 0.2; }
+
+  /* Graph toolbar */
+  #graph-toolbar {
+    position: absolute;
+    top: 10px; left: 10px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    z-index: 40;
+  }
+  .gt-btn {
+    font-size: 11px;
+    color: var(--text);
+    background: rgba(13,17,23,0.82);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 6px 9px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .gt-btn:hover { background: rgba(35,196,167,0.15); border-color: rgba(35,196,167,0.4); }
+  .gt-btn.active { background: rgba(35,196,167,0.25); border-color: rgba(35,196,167,0.6); color: #fff; }
+
+  /* Neighbor detail panel */
+  #neighbor-panel {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 250px; max-height: 60vh;
+    background: rgba(13,17,23,0.95);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    z-index: 45;
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  #np-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--panel-border);
+    font-size: 12px; font-weight: 600;
+  }
+  #np-close {
+    background: transparent; border: none; color: var(--muted);
+    font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px;
+  }
+  #np-close:hover { color: #fff; }
+  #np-body { overflow-y: auto; padding: 8px 10px; font-size: 11px; }
+  .np-group { margin-bottom: 10px; }
+  .np-group h4 { margin: 0 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .np-item {
+    display: block; padding: 4px 6px; margin: 2px 0;
+    border-radius: 6px; background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--accent, #5b8def);
+    cursor: pointer; color: var(--text);
+  }
+  .np-item:hover { background: rgba(35,196,167,0.12); }
+
+  #loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 13px;
+    pointer-events: none;
+    z-index: 5;
+    background: rgba(8, 11, 16, 0.85);
+    backdrop-filter: blur(4px);
+  }
+  #loading .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--panel-border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading .progress-wrap {
+    width: 260px;
+    margin-bottom: 12px;
+  }
+  #loading .progress-bar-bg {
+    width: 100%;
+    height: 5px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  #loading .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px;
+    transition: width 0.2s ease;
+  }
+  #loading .progress-label {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  #loading .progress-label strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+<aside id="sidebar">
+  <div id="brand">CAPS <span>Syllabus</span></div>
+  <div id="subhead">3D knowledge graph · hover for detail · click to focus</div>
+
+  <button id="sidebar-toggle" title="Toggle sidebar (Ctrl+B)" aria-label="Toggle sidebar" aria-expanded="true">
+    <svg class="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <input id="search" type="text" placeholder="Search topic, area, descriptor…">
+
+  <ul id="subject-list"></ul>
+  <button class="show-all" id="show-all-btn">Show all subjects</button>
+
+  <div id="stats">
+    <div><strong>0</strong> nodes · <strong>0</strong> links</div>
+    <div id="stats-detail"></div>
+    <div id="cache-status" style="margin-top:8px;font-size:10.5px;color:var(--muted)"></div>
+  </div>
+  <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--panel-border)">
+    <button id="load-graph-btn" style="width:100%;padding:7px 8px;font-size:12px;color:var(--text);background:rgba(35,196,167,0.12);border:1px solid rgba(35,196,167,0.3);border-radius:8px;cursor:pointer;text-align:center;transition:background 0.12s">Load graph for current subject</button>
+    <button id="clear-cache-btn" style="width:100%;padding:6px 8px;font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--panel-border);border-radius:8px;cursor:pointer;margin-top:6px;text-align:center;transition:color 0.12s,background 0.12s">Clear localStorage cache</button>
+  </div>
+</aside>
+
+<!-- ── 3D canvas ───────────────────────────────────────────────────────── -->
+<div id="graph-wrap">
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Loading dataset…</div>
+  </div>
+  <div id="graph"></div>
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#5b8def"></div> Document</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#23c4a7"></div> Content Area</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f0a030"></div> Topic</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c77dff"></div> Sub-topic</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div> Assessment</div>
+  </div>
+  <div id="hint">Drag to move · Scroll/pinch to zoom · Tap node: focus + neighbors · Double-tap: expand/collapse · Right-click: pin</div>
+  <!-- Floating toolbar -->
+  <div id="graph-toolbar">
+    <button id="btn-2d3d" class="gt-btn" title="Toggle 2D / 3D view">2D</button>
+    <button id="btn-expand" class="gt-btn" title="Expand all subtrees">Expand all</button>
+    <button id="btn-collapse" class="gt-btn" title="Collapse to top tiers">Collapse</button>
+    <button id="btn-pin" class="gt-btn" title="Pin/unpin selected node in place">Pin</button>
+    <button id="btn-fit" class="gt-btn" title="Fit graph to view">Fit</button>
+  </div>
+  <!-- Neighbor detail panel -->
+  <div id="neighbor-panel" style="display:none">
+    <div id="np-head">
+      <span id="np-title">Node</span>
+      <button id="np-close" aria-label="Close">×</button>
+    </div>
+    <div id="np-body"></div>
+  </div>
+  <!-- Floating pin button: appears when sidebar is collapsed, click to restore -->
+  <button class="sidebar-pin" id="sidebar-pin" title="Restore sidebar (Ctrl+B)" aria-label="Restore sidebar" aria-expanded="false">
+    <svg class="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ── Tooltip ──────────────────────────────────────────────────────────── -->
+<div id="tooltip"></div>
+
+<!-- ── No external graph libs: self-contained Canvas2D renderer (see below) ── -->
+
+<script>
+// Surface ANY uncaught error on screen (so mobile failures are diagnosable instead of a silent spinner).
+(function () {
+  function showFatal(msg) {
+    var el = document.getElementById('loading');
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.querySelector('.progress-wrap') && el.querySelector('.progress-wrap').remove();
+    el.innerHTML = '<div style="color:#ff6b6b;font-weight:500;margin-bottom:8px">Runtime error</div>'
+      + '<div style="font-size:12px;color:#e6edf3;max-width:80%;word-break:break-word">'
+      + String(msg).replace(/</g, '&lt;') + '</div>';
+  }
+  window.addEventListener('error', function (e) {
+    showFatal((e && e.message) ? e.message : 'Unknown error' + (e && e.filename ? ' @ ' + e.filename + ':' + e.lineno : ''));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    showFatal('Unhandled promise rejection: ' + ((e && e.reason && (e.reason.message || e.reason)) || e));
+  });
+})();
+</script>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────
+// Subject registry — derived from the dataset at build time
+// Update this if new subjects/grades appear in consolidated.jsonl
+// ─────────────────────────────────────────────────────────────────────────
+const SUBJECTS = [
+  {
+    id: 'mathematics',
+    name: 'Mathematics',
+    color: '#5b8def',
+    icon: '∫',
+    grades: [
+      { id: 'gr-r',       label: 'Grade R',          docId: 'doc-2' },
+      { id: 'gr13',       label: 'Grades 1–3',       docId: 'doc-0' },
+      { id: 'gr46',       label: 'Grades 4–6',       docId: 'doc-1' },
+      { id: 'gr79',       label: 'Grades 7–9',       docId: 'doc-3' },
+      { id: 'gr1012',     label: 'Grades 10–12',     docId: 'doc-4' },
+    ],
+  },
+  {
+    id: 'technical-maths',
+    name: 'Technical Mathematics',
+    color: '#f0a030',
+    icon: '⚙',
+    grades: [
+      { id: 'tech-1012',  label: 'Grades 10–12',    docId: 'doc-5' },
+    ],
+  },
+  {
+    id: 'math-literacy',
+    name: 'Mathematical Literacy',
+    color: '#c77dff',
+    icon: '📊',
+    grades: [
+      { id: 'lit-1012',   label: 'Grades 10–12',    docId: 'doc-6' },
+    ],
+  },
+];
+
+const ALL_SUBJECTS_ID = 'all';
+
+// ─────────────────────────────────────────────────────────────────────────
+// UI yield + progress helpers
+// ─────────────────────────────────────────────────────────────────────────
+function yieldToUI() {
+  return new Promise(r => setTimeout(r, 0));
+}
+
+function updateProgress(pct, built, totalDocs) {
+  const fill = document.querySelector('#loading .progress-bar-fill');
+  const label = document.querySelector('#loading .progress-label');
+  if (fill) fill.style.width = pct + '%';
+  if (label) {
+    const docName = built > 0 && built <= totalDocs
+      ? ` · document ${built} of ${totalDocs}`
+      : '';
+    label.innerHTML = `<strong>${pct}%</strong> loading${docName}`;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// localStorage cache — persists parsed dataset + per-subject graphs across
+// page loads so repeat visits skip the JSONL fetch and per-subject rebuild.
+// ─────────────────────────────────────────────────────────────────────────
+const CACHE_VERSION = 'v3';
+const PAIRS_CACHE_KEY = `caps-graph-pairs-${CACHE_VERSION}`;
+const GRAPH_CACHE_PREFIX = `caps-graph-graph-${CACHE_VERSION}-`;
+const LAST_SUBJECT_KEY = `caps-graph-last-subject-${CACHE_VERSION}`;
+
+function getCacheKey(subjectId) {
+  if (subjectId === ALL_SUBJECTS_ID) return GRAPH_CACHE_PREFIX + 'all';
+  return GRAPH_CACHE_PREFIX + subjectId;
+}
+
+function loadFromCache(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return null;
+    return data;
+  } catch (e) { return null; }
+}
+
+function saveToCache(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    console.warn('localStorage write failed:', e.message);
+    return false;
+  }
+}
+
+function getPairsFromCache() { return loadFromCache(PAIRS_CACHE_KEY); }
+function savePairsToCache(pairs) { return saveToCache(PAIRS_CACHE_KEY, pairs); }
+function getGraphFromCache(subjectId) { return loadFromCache(getCacheKey(subjectId)); }
+function saveGraphToCache(subjectId, graphData) { return saveToCache(getCacheKey(subjectId), graphData); }
+
+function getLastSubject() {
+  try {
+    const s = localStorage.getItem(LAST_SUBJECT_KEY);
+    if (s && (s === ALL_SUBJECTS_ID || SUBJECTS.some(sb => sb.id === s))) return s;
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+function saveLastSubject(subjectId) {
+  try { localStorage.setItem(LAST_SUBJECT_KEY, subjectId); } catch (e) { /* ignore */ }
+}
+
+function getCacheStatus() {
+  const status = {};
+  SUBJECTS.forEach(sb => { status[sb.id] = getGraphFromCache(sb.id) !== null; });
+  status[ALL_SUBJECTS_ID] = getGraphFromCache(ALL_SUBJECTS_ID) !== null;
+  status._pairs = getPairsFromCache() !== null;
+  return status;
+}
+
+function clearAllCaches() {
+  try {
+    const keys = [PAIRS_CACHE_KEY, LAST_SUBJECT_KEY];
+    keys.forEach(k => localStorage.removeItem(k));
+    SUBJECTS.forEach(sb => localStorage.removeItem(getCacheKey(sb.id)));
+    localStorage.removeItem(getCacheKey(ALL_SUBJECTS_ID));
+  } catch (e) { /* ignore */ }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Build graph for a single subject (subset of pairs) — reuses buildFullGraph
+// ─────────────────────────────────────────────────────────────────────────
+async function buildSubjectGraph(pairs, subjectId) {
+  if (subjectId === ALL_SUBJECTS_ID) return await buildFullGraph(pairs);
+  const subjectPairs = pairs.filter(p => {
+    const c = JSON.parse(p.completion);
+    const subj = c.documentMeta.subject;
+    let sid;
+    if (subj === 'Mathematics') sid = 'mathematics';
+    else if (subj === 'Technical Mathematics') sid = 'technical-maths';
+    else if (subj === 'Mathematical Literacy') sid = 'math-literacy';
+    else sid = 'mathematics';
+    return sid === subjectId;
+  });
+  return await buildFullGraph(subjectPairs);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Load a graph for a subject — from cache if available, else build + cache
+// ─────────────────────────────────────────────────────────────────────────
+async function loadGraphForSubject(pairs, subjectId) {
+  const cached = getGraphFromCache(subjectId);
+  // Reject unusable cached graphs (e.g. empty left over from broken builds).
+  if (cached && Array.isArray(cached.nodes) && cached.nodes.length > 0) {
+    if (!cached._docToSubject) {
+      cached._docToSubject = computeSubjectMaps(pairs);
+      saveGraphToCache(subjectId, cached);
+    }
+    return cached;
+  }
+  if (!pairs) throw new Error('No pairs available — call loadPairs() first');
+  const graph = await buildSubjectGraph(pairs, subjectId);
+  graph._docToSubject = computeSubjectMaps(pairs);
+  saveGraphToCache(subjectId, graph);
+  return graph;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Load pairs: from localStorage cache, or fetch + cache
+// ─────────────────────────────────────────────────────────────────────────
+async function loadPairs() {
+  const cached = getPairsFromCache();
+  if (cached) return cached;
+  // Resolve the data file against the page URL, forcing a trailing slash on
+  // the base so it works whether opened as /caps-graph/ or /caps-graph.
+  const baseHref = location.href.endsWith('/') ? location.href : location.href + '/';
+  const dataUrl = new URL('data/consolidated.jsonl', baseHref).href;
+  let resp;
+  try {
+    resp = await fetch(dataUrl);
+  } catch (netErr) {
+    throw new Error(`NETWORK ERROR fetching ${dataUrl} — ${netErr.message}. If the dataset fails to load, ensure the page is served from a host that can reach data/consolidated.jsonl (open the page at its root path).`);
+  }
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${dataUrl}`);
+  const text = await resp.text();
+  if (!text.trim()) throw new Error(`Dataset file at ${dataUrl} is empty`);
+  if (text.trimStart().startsWith('<')) throw new Error(`Dataset at ${dataUrl} returned HTML, not JSONL — the URL base is wrong.`);
+  const lines = text.trim().split('\n').filter(Boolean);
+  const pairs = lines.map(l => JSON.parse(l));
+  if (!pairs.length) throw new Error(`Dataset at ${dataUrl} parsed to 0 pairs`);
+  savePairsToCache(pairs);
+  return pairs;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Render cache status line in sidebar
+// ─────────────────────────────────────────────────────────────────────────
+function renderCacheStatus() {
+  const statusEl = document.getElementById('cache-status');
+  if (!statusEl) return;
+  const status = getCacheStatus();
+  const parts = [];
+  SUBJECTS.forEach(sb => {
+    const ok = status[sb.id];
+    const icon = ok ? '\u2713' : '\u25CB';
+    const color = ok ? sb.color : '#555';
+    parts.push(`<span style="color:${color};font-weight:500">${icon} ${sb.name}</span>`);
+  });
+  const allOk = status[ALL_SUBJECTS_ID];
+  const allIcon = allOk ? '\u2713' : '\u25CB';
+  const allColor = allOk ? '#23c4a7' : '#555';
+  parts.push(`<span style="color:${allColor};font-weight:500">${allIcon} All subjects</span>`);
+  const pairsCached = status._pairs;
+  const pairsText = pairsCached
+    ? '<span style="color:var(--accent)">\u2713 pairs cached</span>'
+    : '<span style="color:var(--muted)">\u25CB pairs not cached</span>';
+  statusEl.innerHTML = parts.join('  \u00B7  ') + '  \u00B7  ' + pairsText;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────
+let graphData = null;       // { nodes, links } — full dataset
+let nodeMap = new Map();    // id → node
+let linkList = [];          // links array
+let currentSubjectId = ALL_SUBJECTS_ID;
+let currentFilter = '';
+let currentDocFilter = null;
+
+// ─────────────────────────────────────────────────────────────────────────
+// Build subject→docId map and docId→subject map from the dataset
+// ─────────────────────────────────────────────────────────────────────────
+function computeSubjectMaps(pairs) {
+  const docToSubject = new Map();
+  pairs.forEach((p, idx) => {
+    const c = JSON.parse(p.completion);
+    const subj = c.documentMeta.subject;
+    let sid;
+    if (subj === 'Mathematics')         sid = 'mathematics';
+    else if (subj === 'Technical Mathematics') sid = 'technical-maths';
+    else if (subj === 'Mathematical Literacy') sid = 'math-literacy';
+    else sid = 'mathematics'; // fallback
+    docToSubject.set(`doc-${idx}`, sid);
+  });
+  return docToSubject;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Load dataset
+// ─────────────────────────────────────────────────────────────────────────
+async function loadDataset() {
+  // Delegated to loadPairs() which uses localStorage cache.
+  return loadPairs();
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Build graph from all pairs, then filter by subject + search
+// ─────────────────────────────────────────────────────────────────────────
+async function buildFullGraph(pairs) {
+  const nodes = [];
+  const links = [];
+  const nmap = new Map();
+
+  function addNode(id, label, type, meta = {}, color) {
+    if (nmap.has(id)) return nmap.get(id);
+    const c = color || nodeColorByType(type);
+    const n = { id, label, type, color: c, meta, val: nodeValByType(type) };
+    nmap.set(id, n);
+    nodes.push(n);
+    return n;
+  }
+
+  function nodeColorByType(type) {
+    return {
+      document:  '#5b8def',
+      contentArea:'#23c4a7',
+      topic:     '#f0a030',
+      subtopic:  '#c77dff',
+      assessment:'#ff6b6b',
+    }[type] || '#888';
+  }
+  function nodeValByType(type) {
+    return {
+      document:  4.5,
+      contentArea:3.0,
+      topic:     2.0,
+      subtopic:  1.2,
+      assessment:1.8,
+    }[type] || 1.5;
+  }
+
+  let idx = 0;
+  for (const pair of pairs) {
+    const c = JSON.parse(pair.completion);
+    const dm = c.documentMeta;
+    const docId = `doc-${idx}`;
+    idx++;
+    addNode(docId,
+      `${dm.subject} · ${dm.grade} · ${dm.phase || ''}`.trim(),
+      'document', {
+        sourcePdf: dm.sourcePdf,
+        subject: dm.subject,
+        grade: dm.grade,
+        phase: dm.phase,
+        pairId: pair.id,
+        standard: pair.standard,
+        isbn: dm.isbn || null,
+      },
+      SUBJECTS.find(s => dm.subject ===
+          (s.id === 'mathematics' ? 'Mathematics'
+         : s.id === 'technical-maths' ? 'Technical Mathematics'
+         : s.id === 'math-literacy' ? 'Mathematical Literacy'
+         : dm.subject))?.color || '#5b8def'
+    );
+
+    c.contentAreas.forEach((ca, caIdx) => {
+      const caId = `${docId}-ca-${caIdx}`;
+      addNode(caId, ca.contentArea, 'contentArea', {
+        area: ca.contentArea,
+        weighting: ca.weighting,
+        docId,
+        subject: dm.subject,
+      });
+      links.push({ source: docId, target: caId });
+
+      ca.topics.forEach((t, tIdx) => {
+        const tId = `${caId}-t-${tIdx}`;
+        addNode(tId, t.topic.slice(0, 55), 'topic', {
+          topic: t.topic,
+          area: ca.contentArea,
+          docId,
+          subject: dm.subject,
+        });
+        links.push({ source: caId, target: tId });
+
+        (t.subtopics || []).forEach((st, stIdx) => {
+          const stId = `${tId}-st-${stIdx}`;
+          addNode(stId, st.descriptor.slice(0, 58), 'subtopic', {
+            descriptor: st.descriptor,
+            topic: t.topic,
+            docId,
+            subject: dm.subject,
+          });
+          links.push({ source: tId, target: stId });
+        });
+      });
+    });
+
+    const programme = c.assessment?.formal?.programme;
+    const programmeList = Array.isArray(programme)
+      ? programme
+      : (programme && Array.isArray(programme.components) ? programme.components : []);
+    (programmeList || []).forEach((task, tkIdx) => {
+      if (!task || typeof task !== 'object') return;
+      const tkId = `${docId}-assess-${tkIdx}`;
+      addNode(tkId, task.task || 'Assessment', 'assessment', {
+        task: task.task,
+        weighting: task.weighting,
+        when: task.when,
+        method: task.method,
+        docId,
+        subject: dm.subject,
+      });
+      links.push({ source: docId, target: tkId });
+    });
+  }
+
+  // Yield to browser so the progress bar repaints between documents
+  await yieldToUI();
+
+  return { nodes, links, nodeMap: nmap };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Filter graph for a given subject (or all) + search string
+// ─────────────────────────────────────────────────────────────────────────
+// Map a human subject name → internal subject id (so filtering works whether
+// graphData came from the full dataset or a per-subject cached subset).
+function subjectNameToId(name) {
+  if (name === 'Mathematics') return 'mathematics';
+  if (name === 'Technical Mathematics') return 'technical-maths';
+  if (name === 'Mathematical Literacy') return 'math-literacy';
+  return null;
+}
+
+function filterGraph(full, subjectId, filterStr) {
+  let filteredNodeIds = new Set();
+
+  full.nodes.forEach(n => {
+    const nodeSubjectId = subjectNameToId(n.meta && n.meta.subject);
+    const inSubject = subjectId === ALL_SUBJECTS_ID
+      ? true
+      : nodeSubjectId === subjectId;
+
+    const inDoc = !currentDocFilter
+      ? true
+      : n.meta && n.meta.docId === currentDocFilter;
+
+    const matchesSearch = !filterStr
+      || n.label.toLowerCase().includes(filterStr)
+      || (n.meta && Object.values(n.meta).some(v =>
+           typeof v === 'string' && v.toLowerCase().includes(filterStr)));
+
+    if (inSubject && inDoc && matchesSearch) filteredNodeIds.add(n.id);
+  });
+
+  const nodesOut = full.nodes.map(n => {
+    const match = filteredNodeIds.has(n.id);
+    return {
+      ...n,
+      color: match ? n.color : 'rgba(255,255,255,0.05)',
+      hidden: !match,
+      val: match ? n.val : 0.3,
+    };
+  });
+
+  const linksOut = full.links.map(l => {
+    const srcId = typeof l.source === 'object' ? l.source.id : l.source;
+    const tgtId = typeof l.target === 'object' ? l.target.id : l.target;
+    const srcMatch = filteredNodeIds.has(srcId);
+    const tgtMatch = filteredNodeIds.has(tgtId);
+    return {
+      source: srcId,
+      target: tgtId,
+      color: (srcMatch && tgtMatch) ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.02)',
+      hidden: !srcMatch && !tgtMatch,
+      width: (srcMatch && tgtMatch) ? 0.7 : 0.15,
+    };
+  });
+
+  return { nodes: nodesOut, links: linksOut };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Stats helper
+// ─────────────────────────────────────────────────────────────────────────
+function computeStats(nodes, links, subjectId) {
+  const visibleNodes = nodes.filter(n => !n.hidden);
+  const visibleLinks = links.filter(l => !l.hidden);
+  const docs = visibleNodes.filter(n => n.type === 'document').length;
+  const areas = visibleNodes.filter(n => n.type === 'contentArea').length;
+  const topics = visibleNodes.filter(n => n.type === 'topic').length;
+  const subtopics = visibleNodes.filter(n => n.type === 'subtopic').length;
+  const assessments = visibleNodes.filter(n => n.type === 'assessment').length;
+  const subjectLabel = subjectId === ALL_SUBJECTS_ID ? 'All subjects' : SUBJECTS.find(s => s.id === subjectId)?.name || subjectId;
+  return { docs, areas, topics, subtopics, assessments, subjectLabel, totalNodes: visibleNodes.length, totalLinks: visibleLinks.length };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Sidebar rendering
+// ─────────────────────────────────────────────────────────────────────────
+function renderSidebar(activeSubjectId) {
+  const list = document.getElementById('subject-list');
+  list.innerHTML = '';
+
+  SUBJECTS.forEach(subj => {
+    const li = document.createElement('li');
+    li.className = 'subject-item' + (subj.id === activeSubjectId ? ' active' : '');
+    li.dataset.subjectId = subj.id;
+
+    const dot = document.createElement('span');
+    dot.className = 'subject-dot';
+    dot.style.background = subj.color;
+    li.appendChild(dot);
+
+    const name = document.createElement('span');
+    name.className = 'subject-name';
+    name.textContent = subj.name;
+    li.appendChild(name);
+
+    const count = document.createElement('span');
+    count.className = 'subject-count';
+    // count documents for this subject
+    const docCount = subj.grades.length;
+    count.textContent = `${docCount} doc${docCount > 1 ? 's' : ''}`;
+    li.appendChild(count);
+
+    li.addEventListener('click', () => selectSubject(subj.id));
+
+    // Grade sub-list
+    const gradeList = document.createElement('div');
+    gradeList.className = 'grade-list';
+    subj.grades.forEach(g => {
+      const gItem = document.createElement('span');
+      gItem.className = 'grade-item';
+      gItem.textContent = g.label;
+      gItem.dataset.gradeDocId = g.docId;
+      gItem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectGrade(g.docId);
+      });
+      gradeList.appendChild(gItem);
+    });
+    li.appendChild(gradeList);
+    list.appendChild(li);
+  });
+}
+
+function selectSubject(subjectId, { autoLoad = true } = {}) {
+  if (subjectId === currentSubjectId) return;
+  currentSubjectId = subjectId;
+  saveLastSubject(subjectId);
+  renderSidebar(subjectId);
+  // If this subject's graph is already cached, load it instantly (still lazy + cached).
+  // Otherwise leave the canvas as-is and show a "Load graph" action.
+  if (autoLoad && getGraphFromCache(subjectId)) {
+    loadCurrentGraph(false).catch(err => console.error('selectSubject load failed:', err));
+  } else {
+    updateLoadButton();
+  }
+}
+
+function updateLoadButton() {
+  const loadBtn = document.getElementById('load-graph-btn');
+  if (!loadBtn) return;
+  const subjName = SUBJECTS.find(s => s.id === currentSubjectId)?.name || 'subject';
+  if (getGraphFromCache(currentSubjectId)) {
+    loadBtn.textContent = 'Reload ' + subjName;
+  } else {
+    loadBtn.textContent = 'Load graph: ' + subjName;
+  }
+}
+
+function selectGrade(docId) {
+  const subj = SUBJECTS.find(s => s.grades.some(g => g.docId === docId));
+  if (subj) {
+    currentSubjectId = subj.id;
+    currentDocFilter = docId;
+    saveLastSubject(subj.id);
+    renderSidebar(subj.id);
+    if (getGraphFromCache(subj.id)) {
+      loadCurrentGraph(false).catch(err => console.error('selectGrade load failed:', err));
+    } else {
+      updateLoadButton();
+    }
+  }
+}
+
+function updateStats() {
+  const filtered = filterGraph(graphData, currentSubjectId, currentFilter);
+  const stats = computeStats(filtered.nodes, filtered.links, currentSubjectId);
+  document.getElementById('stats').querySelector('div').innerHTML =
+    `<strong>${stats.totalNodes}</strong> nodes · <strong>${stats.totalLinks}</strong> links`;
+  document.getElementById('stats-detail').innerHTML =
+    `${stats.docs} docs · ${stats.areas} areas · ${stats.topics} topics · ${stats.subtopics} sub-topics · ${stats.assessments} assessment tasks`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Search
+// ─────────────────────────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', (e) => {
+  currentFilter = e.target.value.toLowerCase().trim();
+  applyFilter();
+  updateStats();
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Show all subjects
+// ─────────────────────────────────────────────────────────────────────────
+document.getElementById('show-all-btn').addEventListener('click', () => {
+  currentSubjectId = ALL_SUBJECTS_ID;
+  currentDocFilter = null;
+  renderSidebar(ALL_SUBJECTS_ID);
+  applyFilter();
+  updateStats();
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Tooltip
+// ─────────────────────────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+window.addEventListener('mousemove', (e) => {
+  if (tooltip.style.display === 'none') return;
+  tooltip.style.left = e.clientX + 'px';
+  tooltip.style.top  = e.clientY + 'px';
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Render 3D graph
+// ─────────────────────────────────────────────────────────────────────────
+let fg = null;
+let MODE_3D = true;
+
+function applyFilter() {
+  if (!fg || !graphData) return;
+  const filtered = filterGraph(graphData, currentSubjectId, currentFilter);
+  fg.graphData({ nodes: filtered.nodes, links: filtered.links });
+  fitGraph();
+}
+
+function buildViewer() {
+  const container = document.getElementById('graph');
+  const wrap = document.getElementById('graph-wrap');
+  MODE_3D = false;
+
+  // ── Self-contained 2D force-directed renderer (Canvas2D — no external libs) ──
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
+  container.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  let viewW = wrap.clientWidth || 600, viewH = wrap.clientHeight || 400;
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function resizeCanvas() {
+    viewW = wrap.clientWidth || window.innerWidth || 600;
+    viewH = wrap.clientHeight || window.innerHeight || 400;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.floor(viewW * dpr));
+    canvas.height = Math.max(1, Math.floor(viewH * dpr));
+    canvas.style.width = viewW + 'px';
+    canvas.style.height = viewH + 'px';
+  }
+  resizeCanvas();
+
+  // Simulation state
+  let nodes = [];
+  let links = [];
+  let simRunning = false;
+  let alpha = 1;
+  const transform = { x: 0, y: 0, k: 1 }; // pan/zoom
+  let rotX = 0, rotY = 0;                  // 3D orbit angles
+  let hovered = null, dragging = null;
+  let selected = null, selectedNeighbors = new Set();
+  let mouse = { x: 0, y: 0 };
+  let pointerDownNode = null, pointerDownX = 0, pointerDownY = 0, pointerMoved = false;
+  let lastTapTime = 0, lastTapNode = null;
+  let projMap = new Map();                // id -> {X,Y,s} from last drawn frame (used for picking)
+
+  function nodeRadius(n) {
+    const base = Math.sqrt(n.val || 1) * 2.6;
+    return Math.max(2.2, Math.min(base, 13));
+  }
+
+  // ── Expand / hierarchy infrastructure ──
+  const TIER = { document: 0, contentArea: 1, topic: 2, subtopic: 3, assessment: 4 };
+  let expanded = new Set();              // node ids whose children are currently shown
+  let parentOf = new Map();              // node.id -> parent node (immediate higher tier)
+  let neighborsOf = new Map();           // node.id -> Set of linked node ids
+  let nodeById = new Map();              // node.id -> node object
+  let pinned = new Set();                // node ids pinned in place by the user
+  function tierOf(n) { return TIER[n.type] != null ? TIER[n.type] : 2; }
+  function hasChildren(n) {
+    const set = neighborsOf.get(n.id);
+    if (!set) return false;
+    for (const id of set) { const c = nodeById.get(id); if (c && tierOf(c) > tierOf(n)) return true; }
+    return false;
+  }
+  function computeVisibility() {
+    // Roots (tier <= 1) always visible; deeper nodes only when their parent is expanded.
+    for (const n of nodes) {
+      if (tierOf(n) <= 1) { n.hidden = false; continue; }
+      const p = parentOf.get(n.id);
+      n.hidden = !(p && expanded.has(p.id));
+    }
+    for (const l of links) {
+      const s = l.source, t = l.target;
+      l.hidden = !s || !t || s.hidden || t.hidden;
+    }
+  }
+
+  function setGraph(g) {
+    nodes = (g.nodes || []).map(n => ({
+      id: n.id, label: n.label, type: n.type, color: n.color,
+      meta: n.meta, val: n.val || 1, hidden: false,
+      x: (Math.random() - 0.5) * 400, y: (Math.random() - 0.5) * 400,
+      vx: 0, vy: 0, z: (Math.random() - 0.5) * 300, pinned: false,
+    }));
+    nodeById = new Map();
+    nodes.forEach(n => nodeById.set(n.id, n));
+    links = (g.links || []).map(l => ({
+      source: nodeById.get(typeof l.source === 'object' ? l.source.id : l.source),
+      target: nodeById.get(typeof l.target === 'object' ? l.target.id : l.target),
+      color: l.color, width: l.width || 0.5, hidden: false,
+    })).filter(l => l.source && l.target);
+
+    // Hierarchy + neighbor maps (each link connects a node to its parent)
+    parentOf = new Map(); neighborsOf = new Map();
+    for (const n of nodes) neighborsOf.set(n.id, new Set());
+    for (const l of links) {
+      const s = l.source, t = l.target;
+      neighborsOf.get(s.id).add(t.id); neighborsOf.get(t.id).add(s.id);
+    }
+    for (const l of links) {
+      const s = l.source, t = l.target;
+      if (tierOf(t) < tierOf(s) && !parentOf.has(s.id)) parentOf.set(s.id, t);
+      else if (tierOf(s) < tierOf(t) && !parentOf.has(t.id)) parentOf.set(t.id, s);
+    }
+
+    // Progressive start: only top tiers (document + contentArea) visible; drill down by tapping.
+    expanded = new Set();
+    computeVisibility();
+    alpha = 1; startSim();
+  }
+
+  function tick() {
+    const rep = 1400, spr = 0.02, center = 0.012;
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      if (a === dragging || a.pinned) continue;
+      let fx = 0, fy = 0;
+      // repulsion
+      for (let j = 0; j < nodes.length; j++) {
+        if (i === j) continue;
+        const b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 0.01) { dx = Math.random(); dy = Math.random(); d2 = 1; }
+        const f = rep / d2;
+        const d = Math.sqrt(d2);
+        fx += (dx / d) * f; fy += (dy / d) * f;
+      }
+      // centering
+      fx -= a.x * center; fy -= a.y * center;
+      a.vx = (a.vx + fx * 0.02) * 0.86;
+      a.vy = (a.vy + fy * 0.02) * 0.86;
+    }
+    // springs (links)
+    for (const l of links) {
+      if (!l.source || !l.target) continue;
+      const s = l.source, t = l.target;
+      let dx = t.x - s.x, dy = t.y - s.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const f = (d - 70) * spr;
+      const fx = (dx / d) * f, fy = (dy / d) * f;
+      if (s !== dragging) { s.vx += fx; s.vy += fy; }
+      if (t !== dragging) { t.vx -= fx; t.vy -= fy; }
+    }
+    for (const n of nodes) {
+      if (n === dragging || n.pinned) continue;
+      n.x += n.vx * alpha; n.y += n.vy * alpha;
+    }
+    alpha *= 0.985;
+    if (alpha < 0.02) alpha = 0.02;
+  }
+
+  function draw() {
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, viewW, viewH);
+    ctx.translate(transform.x, transform.y);
+    ctx.scale(transform.k, transform.k);
+
+    // 3D projection helper
+    const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+    const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+    function project(n) {
+      let x = n.x, y = n.y, z = n.z || 0;
+      if (MODE_3D) {
+        // rotate around Y
+        let x1 = x * cosY - z * sinY;
+        let z1 = x * sinY + z * cosY;
+        // rotate around X
+        let y1 = y * cosX - z1 * sinX;
+        let z2 = y * sinX + z1 * cosX;
+        const persp = 700 / (700 + z2);
+        return { X: x1 * persp, Y: y1 * persp, s: persp };
+      }
+      return { X: x, Y: y, s: 1 };
+    }
+
+    projMap = new Map();
+    for (const n of nodes) { if (!n.hidden) projMap.set(n.id, project(n)); }
+
+    const focusMode = !!selected;
+    // links
+    ctx.lineWidth = 1;
+    for (const l of links) {
+      if (l.hidden) continue;
+      const s = l.source, t = l.target;
+      const ps = projMap.get(s.id), pt = projMap.get(t.id);
+      if (!ps || !pt) continue;
+      const isFocus = focusMode && (s === selected || t === selected);
+      ctx.strokeStyle = isFocus ? 'rgba(120,200,255,0.9)' : (l.color || 'rgba(255,255,255,0.15)');
+      ctx.globalAlpha = isFocus ? 0.95 : (focusMode ? 0.06 : 0.5);
+      ctx.beginPath();
+      ctx.moveTo(ps.X, ps.Y);
+      ctx.lineTo(pt.X, pt.Y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // nodes
+    for (const n of nodes) {
+      if (n.hidden) continue;
+      const p = projMap.get(n.id);
+      const r = nodeRadius(n) * (p.s || 1);
+      const isSel = n === selected;
+      const isNeigh = focusMode && selectedNeighbors.has(n.id);
+      const dim = focusMode && !isSel && !isNeigh;
+      ctx.globalAlpha = dim ? 0.12 : (MODE_3D ? (0.4 + 0.6 * (p.s || 1)) : 1);
+      ctx.beginPath();
+      ctx.arc(p.X, p.Y, r, 0, Math.PI * 2);
+      ctx.fillStyle = n.color || '#888';
+      ctx.fill();
+      if (isSel) { ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+      else if (isNeigh) { ctx.lineWidth = 2; ctx.strokeStyle = '#9cd'; ctx.stroke(); }
+      else if (n === hovered) { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+      if (hasChildren(n) && !expanded.has(n.id)) {
+        // expand indicator
+        ctx.fillStyle = '#0d1117'; ctx.font = 'bold 10px system-ui';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('+', p.X, p.Y - 0.5);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // labels
+    ctx.fillStyle = '#cdd6e0';
+    ctx.font = '10px system-ui, sans-serif';
+    for (const n of nodes) {
+      if (n.hidden) continue;
+      const p = projMap.get(n.id);
+      const r = nodeRadius(n) * (p.s || 1);
+      const isSel = n === selected;
+      const isNeigh = focusMode && selectedNeighbors.has(n.id);
+      if (isSel || isNeigh || n === hovered || (r >= 6 && !focusMode)) {
+        ctx.fillText(n.label.slice(0, 26), p.X + r + 3, p.Y + 3);
+      }
+    }
+    ctx.restore();
+  }
+
+  function loop() {
+    if (simRunning || alpha > 0.02) { tick(); draw(); }
+    requestAnimationFrame(loop);
+  }
+  function startSim() { simRunning = true; }
+  function stopSim() { simRunning = false; }
+
+  function fitView() {
+    if (!nodes.length) return;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const n of nodes) {
+      if (n.hidden) continue;
+      const p = projMap.get(n.id);
+      const x = p ? p.X : n.x, y = p ? p.Y : n.y;
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+    }
+    if (minX === Infinity) return;
+    const pad = 40;
+    const w = (maxX - minX) || 1, h = (maxY - minY) || 1;
+    const k = Math.min((viewW - pad * 2) / w, (viewH - pad * 2) / h, 2.5);
+    transform.k = k > 0 ? k : 1;
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    transform.x = viewW / 2 - cx * transform.k;
+    transform.y = viewH / 2 - cy * transform.k;
+    draw();
+  }
+
+  function setFocus(n) {
+    if (!n) { selected = null; selectedNeighbors = new Set(); updateNeighborPanel(null); draw(); return; }
+    selected = n;
+    selectedNeighbors = neighborsOf.get(n.id) || new Set();
+    updateNeighborPanel(n);
+    draw();
+  }
+
+  // Progressive drill-down: a tap expands one level of children under this node
+  // (and keeps any already-expanded nodes open), then re-energizes the layout
+  // so newly-shown nodes push apart from existing ones instead of overlapping.
+  function expandNode(n) {
+    if (!n || expanded.has(n.id)) { setFocus(n); return; }
+    expanded.add(n.id);
+    computeVisibility();
+    // Give newly-revealed children a little outward shove from the parent so the
+    // force solver spreads them instead of stacking on top of the parent.
+    const kids = (neighborsOf.get(n.id) || new Set());
+    let i = 0;
+    for (const id of kids) {
+      const c = nodeById.get(id);
+      if (c && !c.hidden) {
+        const ang = (i++ / Math.max(1, kids.size)) * Math.PI * 2;
+        c.x = n.x + Math.cos(ang) * 60;
+        c.y = n.y + Math.sin(ang) * 60;
+        c.vx = Math.cos(ang) * 4; c.vy = Math.sin(ang) * 4;
+      }
+    }
+    alpha = Math.max(alpha, 0.9);   // re-energize: refactor space around everything
+    setFocus(n);
+  }
+
+  function collapseNode(n) {
+    if (!n) return;
+    expanded.delete(n.id);
+    computeVisibility();
+    alpha = Math.max(alpha, 0.5);
+    draw();
+  }
+
+  function toggleExpand(n) {
+    if (expanded.has(n.id)) collapseNode(n);
+    else expandNode(n);
+  }
+
+  // ── interaction ──
+  function toWorld(px, py) {
+    return { x: (px - transform.x) / transform.k, y: (py - transform.y) / transform.k };
+  }
+  // Pick against projected (screen-space) positions so it works in 3D too.
+  function pick(px, py) {
+    const wx = (px - transform.x) / transform.k;
+    const wy = (py - transform.y) / transform.k;
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i];
+      if (n.hidden) continue;
+      const p = projMap.get(n.id);
+      const X = p ? p.X : n.x, Y = p ? p.Y : n.y;
+      const r = nodeRadius(n) * (p ? p.s : 1) + 3;
+      if ((X - wx) ** 2 + (Y - wy) ** 2 <= r * r) return n;
+    }
+    return null;
+  }
+
+  // Populate the right-hand neighbor panel with attached nodes (grouped by type).
+  function updateNeighborPanel(n) {
+    const panel = document.getElementById('neighbor-panel');
+    const body = document.getElementById('np-body');
+    const title = document.getElementById('np-title');
+    if (!panel || !body || !title) return;
+    if (!n) { panel.style.display = 'none'; return; }
+    title.textContent = n.label.length > 34 ? n.label.slice(0, 32) + '…' : n.label;
+    const neigh = neighborsOf.get(n.id) || new Set();
+    const groups = {};
+    for (const id of neigh) {
+      const c = nodeById.get(id);
+      if (!c) continue;
+      (groups[c.type] = groups[c.type] || []).push(c);
+    }
+    const order = ['document', 'contentArea', 'topic', 'subtopic', 'assessment'];
+    let html = '';
+    for (const t of order) {
+      const arr = groups[t];
+      if (!arr || !arr.length) continue;
+      const lbl = ({ document: 'Documents', contentArea: 'Content Areas', topic: 'Topics', subtopic: 'Sub-topics', assessment: 'Assessments' })[t] || t;
+      html += `<div class="np-group"><h4>${lbl} (${arr.length})</h4>`;
+      for (const c of arr) {
+        const col = c.color || '#5b8def';
+        html += `<div class="np-item" data-id="${c.id}" style="--accent:${col}">${c.label.slice(0, 60)}</div>`;
+      }
+      html += `</div>`;
+    }
+    body.innerHTML = html || '<div style="color:var(--muted)">No connected nodes.</div>';
+    body.querySelectorAll('.np-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const c = nodeById.get(el.dataset.id);
+        if (c) { if (!expanded.has(c.id)) expandNode(c); else setFocus(c); }
+      });
+    });
+    panel.style.display = 'flex';
+  }
+
+  // Unified pointer helpers (work for mouse + touch)
+  const DRAG_THRESHOLD = 8;            // px of movement before a press becomes a drag (so taps expand, they don't nudge)
+  let pressMode = null;                // 'drag' | 'pan' | 'orbit' while a finger/button is down but not yet committed
+  function onPointerDown(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX != null ? e.clientX : e.touches[0].clientX) - rect.left;
+    const y = (e.clientY != null ? e.clientY : e.touches[0].clientY) - rect.top;
+    pointerDownX = x; pointerDownY = y; pointerMoved = false;
+    const n = pick(x, y);
+    pointerDownNode = n;
+    dragging = null; canvas._pan = null; canvas._orbit = null;
+    // Decide what a committed drag would do, but don't commit until movement passes the threshold.
+    pressMode = n ? 'drag' : (MODE_3D ? 'orbit' : 'pan');
+    if (n) canvas.style.cursor = 'grab';
+  }
+  function onPointerMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.clientX != null ? e.clientX : (e.touches && e.touches[0].clientX));
+    const cy = (e.clientY != null ? e.clientY : (e.touches && e.touches[0].clientY));
+    if (cx == null) return;
+    const x = cx - rect.left, y = cy - rect.top;
+    mouse.x = x; mouse.y = y;
+    const dx = x - pointerDownX, dy = y - pointerDownY;
+    const dist = Math.hypot(dx, dy);
+
+    if (pressMode) {
+      // Still within the tap window? treat as a hover (no commit yet).
+      if (!pointerMoved && dist <= DRAG_THRESHOLD) {
+        const hn = pick(x, y);
+        hovered = hn;
+        if (hn) { showTooltip(hn, cx, cy); canvas.style.cursor = 'pointer'; } else { tooltip.style.display = 'none'; canvas.style.cursor = 'grab'; }
+        draw();
+        return;
+      }
+      // Commit to a real drag/pan/orbit once we pass the threshold.
+      if (!pointerMoved) {
+        pointerMoved = true;
+        if (pressMode === 'drag') dragging = pointerDownNode;
+        else if (pressMode === 'orbit') canvas._orbit = { x, y };
+        else canvas._pan = { x: (e.clientX != null ? e.clientX : e.touches[0].clientX) - transform.x, y: (e.clientY != null ? e.clientY : e.touches[0].clientY) - transform.y };
+      }
+    }
+
+    if (dragging) {
+      const w = toWorld(x, y);
+      dragging.x = w.x; dragging.y = w.y; dragging.vx = 0; dragging.vy = 0;
+      alpha = Math.max(alpha, 0.3); draw(); return;
+    }
+    if (canvas._orbit) {
+      fg.orbit(x - canvas._orbit.x, y - canvas._orbit.y);
+      canvas._orbit = { x, y }; return;
+    }
+    if (canvas._pan) {
+      transform.x = cx - canvas._pan.x; transform.y = cy - canvas._pan.y; draw(); return;
+    }
+    // Idle hover (no button pressed)
+    const n = pick(x, y);
+    hovered = n;
+    if (n) { showTooltip(n, cx, cy); canvas.style.cursor = 'pointer'; }
+    else { tooltip.style.display = 'none'; canvas.style.cursor = MODE_3D ? 'move' : 'grab'; }
+    draw();
+  }
+  function onPointerUp(e) {
+    const moved = pointerMoved;
+    const downNode = pointerDownNode;
+    dragging = null; canvas._pan = null; canvas._orbit = null; pressMode = null;
+    pointerDownNode = null;
+    canvas.style.cursor = 'grab';
+    if (!moved && downNode) {
+      const now = Date.now();
+      if (lastTapNode === downNode && (now - lastTapTime) < 320) {
+        // Double-tap = collapse this node's children (manual close)
+        collapseNode(downNode);
+        lastTapNode = null; lastTapTime = 0;
+      } else {
+        // Single tap = expand one level + focus (keeps any already-open nodes open)
+        expandNode(downNode);
+        lastTapNode = downNode; lastTapTime = now;
+      }
+    } else if (!moved && !downNode) {
+      // Tap on empty space clears focus
+      setFocus(null);
+    }
+  }
+
+  canvas.addEventListener('mousedown', onPointerDown);
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerUp);
+  canvas.addEventListener('mouseleave', () => { hovered = null; tooltip.style.display = 'none'; draw(); });
+
+  // Pin/unpin via right-click (desktop) — mobile uses the Pin button
+  canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const n = pick(e.clientX - rect.left, e.clientY - rect.top);
+    if (n) fg.pinNode(n);
+  });
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    const nk = Math.max(0.1, Math.min(transform.k * factor, 8));
+    transform.x = mx - (mx - transform.x) * (nk / transform.k);
+    transform.y = my - (my - transform.y) * (nk / transform.k);
+    transform.k = nk;
+    draw();
+  }, { passive: false });
+
+  // Touch support (mobile) — pointer events above cover most of it; keep pinch-zoom
+  let touchMode = null, lastDist = 0, lastPan = null;
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      onPointerDown(e);
+    } else if (e.touches.length === 2) {
+      touchMode = 'zoom';
+      const [a, b] = e.touches;
+      lastDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      onPointerMove(e);
+    } else if (e.touches.length === 2 && touchMode === 'zoom') {
+      const rect = canvas.getBoundingClientRect();
+      const [a, b] = e.touches;
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      const mx = (a.clientX + b.clientX) / 2 - rect.left;
+      const my = (a.clientY + b.clientY) / 2 - rect.top;
+      const nk = Math.max(0.1, Math.min(transform.k * (dist / lastDist), 8));
+      transform.x = mx - (mx - transform.x) * (nk / transform.k);
+      transform.y = my - (my - transform.y) * (nk / transform.k);
+      transform.k = nk; lastDist = dist; draw();
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => {
+    if (touchMode === 'zoom') { touchMode = null; return; }
+    onPointerUp({});
+    dragging = null; touchMode = null;
+  });
+
+  function showTooltip(n, cx, cy) {
+    const m = n.meta || {};
+    let html = `<div class="tt-label">${n.label}</div><div class="tt-type">${n.type}</div>`;
+    if (m.subject) html += `<div class="tt-row"><strong>Subject:</strong> ${m.subject}</div>`;
+    if (m.grade) html += `<div class="tt-row"><strong>Grade:</strong> ${m.grade}</div>`;
+    if (m.area) html += `<div class="tt-row"><strong>Area:</strong> ${m.area}</div>`;
+    if (m.task) html += `<div class="tt-row"><strong>Task:</strong> ${m.task}</div>`;
+    if (m.descriptor) html += `<div class="tt-desc">${m.descriptor}</div>`;
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    tooltip.style.left = Math.min(cx + 12, window.innerWidth - 240) + 'px';
+    tooltip.style.top = (cy + 12) + 'px';
+  }
+
+  // Build a façade so the rest of the app can keep calling fg.graphData(...)
+  fg = {
+    graphData(g) {
+      if (g) { setGraph(g); setTimeout(fitView, 600); setTimeout(fitView, 1500); }
+      // Return only VISIBLE nodes/links so stats + debug HUD match what's painted
+      return {
+        nodes: nodes.filter(n => !n.hidden),
+        links: links.filter(l => !l.hidden),
+        _all: { nodes, links },
+      };
+    },
+    width(w) { if (w) { /* noop sizing for API compat */ } return this; },
+    height(h) { return this; },
+    zoomToFit() { fitView(); return this; },
+    // Progressive expand / collapse
+    expandAll() { for (const n of nodes) if (hasChildren(n)) expanded.add(n.id); computeVisibility(); alpha = Math.max(alpha, 0.9); fitView(); },
+    collapseAll() { expanded = new Set(); computeVisibility(); alpha = Math.max(alpha, 0.5); fitView(); },
+    toggleExpandAt(n) { if (n) toggleExpand(n); },
+    expandAt(n) { if (n) expandNode(n); },
+    collapseAt(n) { if (n) collapseNode(n); },
+    isExpanded(n) { return n && expanded.has(n.id); },
+    setFocus(n) { setFocus(n); },
+    clearFocus() { setFocus(null); },
+    pinNode(n, pin) { if (!n) return; n.pinned = (pin == null) ? !n.pinned : pin; if (n.pinned) { pinned.add(n.id); n.vx = 0; n.vy = 0; } else pinned.delete(n.id); draw(); },
+    setMode3D(on) { MODE_3D = !!on; fitView(); draw(); },
+    is3D() { return MODE_3D; },
+    orbit(dx, dy) { rotY += dx * 0.005; rotX += dy * 0.005; draw(); },
+    getSelected() { return selected; },
+    getExpanded() { return expanded; },
+  };
+
+  loop();
+
+  // Fade hint after a few seconds
+  setTimeout(() => {
+    const hint = document.getElementById('hint');
+    if (hint) hint.classList.add('dim');
+  }, 5000);
+
+  window.addEventListener('resize', () => { resizeCanvas(); fitView(); });
+}
+
+// Re-assert the real container size and refit the camera. Called after build and
+// whenever data/filter changes, because force-graph captures size once at
+// construction and won't repaint if the container was 0-sized at that moment.
+function fitGraph() {
+  if (typeof fitGraph === 'function' && fg && fg.zoomToFit) { try { fg.zoomToFit(); } catch (e) {} }
+}
+
+
+function setupDebugHud() {
+  try {
+    const params = new URLSearchParams(location.search);
+    if (params.get('debug') !== '1') return;
+    let hud = document.getElementById('debug-hud');
+    if (!hud) {
+      hud = document.createElement('div');
+      hud.id = 'debug-hud';
+      hud.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:200;background:rgba(0,0,0,0.85);'
+        + 'border:1px solid #444;color:#9fe;font:11px monospace;padding:8px 10px;border-radius:8px;'
+        + 'max-width:90vw;line-height:1.5;white-space:pre;pointer-events:none;';
+      document.body.appendChild(hud);
+    }
+    setInterval(() => {
+      const wrap = document.getElementById('graph-wrap');
+      const g = document.getElementById('graph');
+      const canvas = g ? g.querySelector('canvas') : null;
+      const gd = (typeof fg !== 'undefined' && fg && fg.graphData) ? fg.graphData() : null;
+      const n0 = gd && gd.nodes && gd.nodes[0];
+      hud.textContent =
+        `MODE_3D=${MODE_3D}\n` +
+        `win=${window.innerWidth}x${window.innerHeight}\n` +
+        `wrap=${wrap?wrap.clientWidth:0}x${wrap?wrap.clientHeight:0}\n` +
+        `graph=${g?g.clientWidth:0}x${g?g.clientHeight:0}\n` +
+        `canvas=${canvas?canvas.width+'x'+canvas.height:'NONE'}\n` +
+        `nodes=${gd?gd.nodes.length:'n/a'} links=${gd?gd.links.length:'n/a'}\n` +
+        `sampleXY=${n0?(n0.x!==undefined?n0.x.toFixed(1):'undef')+'/'+(n0.y!==undefined?n0.y.toFixed(1):'undef'):'n/a'}`;
+    }, 400);
+  } catch (e) {}
+}
+
+function showModeBadge(text) {
+  let badge = document.getElementById('mode-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'mode-badge';
+    badge.style.cssText = 'position:fixed;top:12px;right:12px;z-index:60;background:rgba(13,17,23,0.92);'
+      + 'border:1px solid rgba(255,255,255,0.14);color:#e6edf3;font-size:11px;padding:6px 10px;'
+      + 'border-radius:8px;max-width:240px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,0.4);';
+    document.body.appendChild(badge);
+  }
+  badge.textContent = text;
+  badge.style.opacity = '1';
+  setTimeout(() => { badge.style.transition = 'opacity 1s'; badge.style.opacity = '0'; }, 6000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Initialisation
+// ─────────────────────────────────────────────────────────────────────────
+
+// ── Sidebar collapse / restore ──────────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarPin = document.getElementById('sidebar-pin');
+let sidebarCollapsed = false;
+
+function setSidebarCollapsed(collapse) {
+  sidebarCollapsed = collapse;
+  sidebar.classList.toggle('collapsed', collapse);
+  sidebarToggle.classList.toggle('collapsed-state', collapse);
+  sidebarToggle.setAttribute('aria-expanded', String(!collapse));
+  sidebarPin.setAttribute('aria-expanded', String(collapse));
+  // When collapsed, graph-wrap should expand to fill the space
+  // (CSS handles margin via the sibling selector on #graph-wrap)
+}
+
+function toggleSidebar() {
+  setSidebarCollapsed(!sidebarCollapsed);
+}
+
+sidebarToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSidebar();
+});
+
+sidebarPin.addEventListener('click', (e) => {
+  e.stopPropagation();
+  setSidebarCollapsed(false);
+});
+
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+    e.preventDefault();
+    toggleSidebar();
+  }
+});
+
+// When graph-wrap resizes after sidebar collapse, re-fit the graph
+const graphCanvas = document.getElementById('graph');
+const resizeObserver = new ResizeObserver(() => {
+  if (fg && graphCanvas) {
+    const w = graphCanvas.parentElement.clientWidth;
+    const h = graphCanvas.parentElement.clientHeight;
+    fg.width(w).height(h);
+  }
+});
+
+// ── Cache control buttons ──────────────────────────────────────────────────
+const loading = document.getElementById('loading');
+
+document.getElementById('load-graph-btn').addEventListener('click', () => {
+  loadCurrentGraph(false).then(() => updateLoadButton()).catch(err => {
+    console.error('Failed to load graph:', err);
+    loading.innerHTML = `<div style="color:#ff6b6b">Failed: ${err.message}</div>`;
+  });
+});
+
+document.getElementById('clear-cache-btn').addEventListener('click', () => {
+  clearAllCaches();
+  renderCacheStatus();
+  if (fg) fg.graphData({ nodes: [], links: [] });
+  document.querySelector('#stats div').innerHTML = '<strong>0</strong> nodes · <strong>0</strong> links';
+  document.getElementById('stats-detail').innerHTML = '';
+  loading.querySelector('.progress-wrap')?.remove();
+  loading.innerHTML = '<div class="spinner"></div><div>Cache cleared — reload to re-fetch dataset</div>';
+});
+
+// ── Graph toolbar ──
+(function wireToolbar() {
+  const btn2d3d = document.getElementById('btn-2d3d');
+  const btnExpand = document.getElementById('btn-expand');
+  const btnCollapse = document.getElementById('btn-collapse');
+  const btnPin = document.getElementById('btn-pin');
+  const btnFit = document.getElementById('btn-fit');
+  const npClose = document.getElementById('np-close');
+  if (npClose) npClose.addEventListener('click', () => {
+    const p = document.getElementById('neighbor-panel');
+    if (p) p.style.display = 'none';
+    if (fg) fg.clearFocus();
+  });
+  if (btn2d3d) btn2d3d.addEventListener('click', () => {
+    const on = !(fg && fg.is3D());
+    if (fg) fg.setMode3D(on);
+    btn2d3d.textContent = on ? '3D' : '2D';
+    btn2d3d.classList.toggle('active', on);
+  });
+  if (btnExpand) btnExpand.addEventListener('click', () => { if (fg) fg.expandAll(); });
+  if (btnCollapse) btnCollapse.addEventListener('click', () => { if (fg) fg.collapseAll(); });
+  if (btnFit) btnFit.addEventListener('click', () => { if (fg) fg.zoomToFit(); });
+  if (btnPin) btnPin.addEventListener('click', () => {
+    const sel = fg && fg.getSelected();
+    if (sel) { fg.pinNode(sel); btnPin.classList.toggle('active', !!sel.pinned); }
+  });
+})();
+
+window.addEventListener('beforeunload', () => {
+  saveLastSubject(currentSubjectId);
+});
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * loadCurrentGraph — load the current subject's graph from cache or rebuild
+ * ────────────────────────────────────────────────────────────────────────── */
+async function loadCurrentGraph(forceRebuild = false) {
+  let pairs = getPairsFromCache();
+  if (!pairs) {
+    // Fallback: if we have graphData from main(), filter it directly
+    if (graphData && graphData._docToSubject) {
+      const filtered = filterGraph(graphData, currentSubjectId, currentFilter);
+      if (fg) fg.graphData({ nodes: filtered.nodes, links: filtered.links });
+      updateStats();
+      return filtered;
+    }
+    return null;
+  }
+  const subjectId = currentSubjectId;
+  let graph;
+  if (!forceRebuild) {
+    graph = getGraphFromCache(subjectId);
+    if (graph && !graph._docToSubject) {
+      graph._docToSubject = computeSubjectMaps(pairs);
+      saveGraphToCache(subjectId, graph);
+    }
+  }
+  if (!graph) {
+    graph = await buildSubjectGraph(pairs, subjectId);
+    graph._docToSubject = computeSubjectMaps(pairs);
+    saveGraphToCache(subjectId, graph);
+  }
+  const filtered = filterGraph(graph, currentSubjectId, currentFilter);
+  if (fg) fg.graphData({ nodes: filtered.nodes, links: filtered.links });
+  updateStats();
+  renderCacheStatus();
+  return filtered;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * main()
+ * ────────────────────────────────────────────────────────────────────────── */
+async function main() {
+  try {
+    renderSidebar(ALL_SUBJECTS_ID);
+    buildViewer();
+    resizeObserver.observe(document.getElementById('graph-wrap'));
+    // 1. Load pairs (from localStorage cache, or fetch + cache)
+    const pairs = await loadPairs();
+
+    // 2. Build full graph for subject maps
+    graphData = await buildFullGraph(pairs);
+    graphData._docToSubject = computeSubjectMaps(pairs);
+
+    // 3. Render sidebar + cache status
+    renderSidebar(ALL_SUBJECTS_ID);
+    renderCacheStatus();
+
+    // 4. Determine initial subject (persisted)
+    let initialSubjectId = ALL_SUBJECTS_ID;
+    const lastSubject = getLastSubject();
+    if (lastSubject) initialSubjectId = lastSubject;
+    currentSubjectId = initialSubjectId;
+    renderSidebar(initialSubjectId);
+
+    // 5. Load initial subject's graph
+    updateProgress(0, 0, pairs.length);
+    const labelEl = loading.querySelector('.progress-label');
+    if (labelEl) labelEl.innerHTML = '<strong>0%</strong> loading graph';
+    await yieldToUI();
+
+    const graph = await loadGraphForSubject(pairs, initialSubjectId);
+    const filtered = filterGraph(graph, currentSubjectId, currentFilter);
+    fg.graphData({ nodes: filtered.nodes, links: filtered.links });
+    fitGraph();
+    // Re-fit once the layout engine has had time to spread nodes out.
+    requestAnimationFrame(() => fitGraph());
+    setTimeout(fitGraph, 400);
+    updateStats();
+    renderCacheStatus();
+
+    // 6. Update button text (cached → "Reload", else "Load graph")
+    updateLoadButton();
+
+    // 7. Settle + hide overlay
+    await new Promise(r => setTimeout(r, 280));
+    loading.classList.add('hidden');
+    setupDebugHud();
+  } catch (err) {
+    loading.querySelector('.progress-wrap')?.remove();
+    loading.innerHTML = `
+      <div style="color:#ff6b6b;font-weight:500;margin-bottom:8px">Failed to load dataset</div>
+      <div style="font-size:12px;color:var(--muted)">${err.message}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Open the page at its root path (ending in /) and ensure data/consolidated.jsonl is reachable.</div>
+    `;
+    console.error('[CAPS graph] main() failed:', err);
+  }
+}
+
+main().catch(console.error);
+</script>
+</body>
+</html>
