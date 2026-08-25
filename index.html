@@ -561,9 +561,27 @@ const SUBJECTS = [
     id: 'math-literacy',
     name: 'Mathematical Literacy',
     color: '#c77dff',
-    icon: '📊',
+    icon: '∑',
     grades: [
       { id: 'lit-1012',   label: 'Grades 10–12',    docId: 'doc-6' },
+    ],
+  },
+  {
+    id: 'life-sciences',
+    name: 'Life Sciences',
+    color: '#23c4a7',
+    icon: '🔬',
+    grades: [
+      { id: 'ls-1012',    label: 'Grades 10–12',    docId: 'doc-7' },
+    ],
+  },
+  {
+    id: 'physical-sciences',
+    name: 'Physical Sciences',
+    color: '#ff6b6b',
+    icon: '⚗',
+    grades: [
+      { id: 'ps-1012',    label: 'Grades 10–12',    docId: 'doc-8' },
     ],
   },
 ];
@@ -666,9 +684,11 @@ async function buildSubjectGraph(pairs, subjectId) {
     const c = JSON.parse(p.completion);
     const subj = c.documentMeta.subject;
     let sid;
-    if (subj === 'Mathematics') sid = 'mathematics';
-    else if (subj === 'Technical Mathematics') sid = 'technical-maths';
+    if (subj === 'Mathematics')              sid = 'mathematics';
+    else if (subj === 'Technical Mathematics')  sid = 'technical-maths';
     else if (subj === 'Mathematical Literacy') sid = 'math-literacy';
+    else if (subj === 'Life Sciences')         sid = 'life-sciences';
+    else if (subj === 'Physical Sciences')     sid = 'physical-sciences';
     else sid = 'mathematics';
     return sid === subjectId;
   });
@@ -766,10 +786,12 @@ function computeSubjectMaps(pairs) {
     const c = JSON.parse(p.completion);
     const subj = c.documentMeta.subject;
     let sid;
-    if (subj === 'Mathematics')         sid = 'mathematics';
-    else if (subj === 'Technical Mathematics') sid = 'technical-maths';
+    if (subj === 'Mathematics')              sid = 'mathematics';
+    else if (subj === 'Technical Mathematics')  sid = 'technical-maths';
     else if (subj === 'Mathematical Literacy') sid = 'math-literacy';
-    else sid = 'mathematics'; // fallback
+    else if (subj === 'Life Sciences')         sid = 'life-sciences';
+    else if (subj === 'Physical Sciences')     sid = 'physical-sciences';
+    else sid = 'mathematics';
     docToSubject.set(`doc-${idx}`, sid);
   });
   return docToSubject;
@@ -836,11 +858,13 @@ async function buildFullGraph(pairs) {
         standard: pair.standard,
         isbn: dm.isbn || null,
       },
-      SUBJECTS.find(s => dm.subject ===
-          (s.id === 'mathematics' ? 'Mathematics'
-         : s.id === 'technical-maths' ? 'Technical Mathematics'
-         : s.id === 'math-literacy' ? 'Mathematical Literacy'
-         : dm.subject))?.color || '#5b8def'
+      SUBJECTS.find(s =>
+          (s.id === 'mathematics' && dm.subject === 'Mathematics')
+          || (s.id === 'technical-maths' && dm.subject === 'Technical Mathematics')
+          || (s.id === 'math-literacy' && dm.subject === 'Mathematical Literacy')
+          || (s.id === 'life-sciences' && dm.subject === 'Life Sciences')
+          || (s.id === 'physical-sciences' && dm.subject === 'Physical Sciences')
+      )?.color || '#5b8def'
     );
 
     c.contentAreas.forEach((ca, caIdx) => {
@@ -910,6 +934,8 @@ function subjectNameToId(name) {
   if (name === 'Mathematics') return 'mathematics';
   if (name === 'Technical Mathematics') return 'technical-maths';
   if (name === 'Mathematical Literacy') return 'math-literacy';
+  if (name === 'Life Sciences') return 'life-sciences';
+  if (name === 'Physical Sciences') return 'physical-sciences';
   return null;
 }
 
@@ -1967,7 +1993,21 @@ async function main() {
     // 6. Update button text (cached → "Reload", else "Load graph")
     updateLoadButton();
 
-    // 7. Settle + hide overlay
+    // 7. Clear any stale localStorage cache from before the Science subjects were added
+    //    (old cached pairs might not include Life/Physical Sciences; force a fresh fetch)
+    try {
+      const KEYS_VERSION = 'v3';
+      const oldKeys = [
+        `caps-graph-pairs-${KEYS_VERSION}`,
+        `caps-graph-last-subject-${KEYS_VERSION}`,
+      ];
+      oldKeys.forEach(k => localStorage.removeItem(k));
+      ['mathematics', 'technical-maths', 'math-literacy', 'life-sciences', 'physical-sciences', 'all'].forEach(sid => {
+        localStorage.removeItem(`caps-graph-graph-${KEYS_VERSION}-${sid}`);
+      });
+    } catch (e) { /* ignore */ }
+
+    // 8. Settle + hide overlay
     await new Promise(r => setTimeout(r, 280));
     loading.classList.add('hidden');
     setupDebugHud();
