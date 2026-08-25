@@ -2011,7 +2011,7 @@ async function loadCurrentGraph(forceRebuild = false) {
 
   function onPointerMove(e) {
     if (!dragging) return;
-    const dx = startX - e.clientX;
+    const dx = e.clientX - startX;
     let newWidth = startWidth + dx;
     // Constrain to min/max widths (must match CSS min-width / max-width)
     const MIN = 220, MAX = 520;
@@ -2025,7 +2025,8 @@ async function loadCurrentGraph(forceRebuild = false) {
     dragging = false;
     handle.classList.remove('dragging');
     document.body.classList.remove('sidebar-resizing');
-    sidebar.style.width = '';   // let CSS take back control (keep current pixel width via transition)
+    // Keep the resized width — don't clear it back to CSS default (260px)
+    if (sidebar.style.width) sidebar.style.width = sidebar.style.width;
   }
 
   handle.addEventListener('pointerdown', onPointerDown);
