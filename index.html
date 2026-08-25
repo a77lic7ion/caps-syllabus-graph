@@ -1113,8 +1113,9 @@ let MODE_3D = true;
 
 function applyFilter() {
   if (!fg || !graphData) return;
-  const filtered = filterGraph(graphData, currentSubjectId, currentFilter);
-  fg.graphData({ nodes: filtered.nodes, links: filtered.links });
+  // Filter controls VISIBILITY only (via computeVisibility), never rebuilds the graph,
+  // so the progressive drill-down + pins are preserved.
+  if (fg.applyFilter) fg.applyFilter();
   fitGraph();
 }
 
@@ -1176,11 +1177,26 @@ function buildViewer() {
     return false;
   }
   function computeVisibility() {
+    const f = (typeof currentFilter !== 'undefined' && currentFilter) ? currentFilter.toLowerCase() : '';
     // Roots (tier <= 1) always visible; deeper nodes only when their parent is expanded.
     for (const n of nodes) {
       if (tierOf(n) <= 1) { n.hidden = false; continue; }
       const p = parentOf.get(n.id);
       n.hidden = !(p && expanded.has(p.id));
+    }
+    if (f) {
+      // Filter active: reveal every node whose label/meta matches AND keep it connected
+      // by also revealing its ancestor chain (so it isn't floating with no edges).
+      const matched = new Set();
+      for (const n of nodes) {
+        const hit = n.label.toLowerCase().includes(f) ||
+          (n.meta && Object.values(n.meta).some(v => typeof v === 'string' && v.toLowerCase().includes(f)));
+        if (hit) {
+          let cur = n;
+          while (cur) { matched.add(cur.id); cur = parentOf.get(cur.id); }
+        }
+      }
+      for (const n of nodes) if (matched.has(n.id)) n.hidden = false;
     }
     for (const l of links) {
       const s = l.source, t = l.target;
@@ -1573,6 +1589,10 @@ function buildViewer() {
   function onPointerUp(e) {
     const moved = pointerMoved;
     const downNode = pointerDownNode;
+    // If a real drag happened on a node, pin it where it was dropped so it STICKS (no bounce-back).
+    if (moved && pressMode === 'drag' && pointerDownNode) {
+      pointerDownNode.pinned = true;
+    }
     dragging = null; canvas._pan = null; canvas._orbit = null; pressMode = null;
     pointerDownNode = null;
     canvas.style.cursor = 'grab';
@@ -1591,6 +1611,7 @@ function buildViewer() {
       // Tap on empty space clears focus
       setFocus(null);
     }
+    draw();
   }
 
   canvas.addEventListener('mousedown', onPointerDown);
@@ -1688,6 +1709,7 @@ function buildViewer() {
     isExpanded(n) { return n && expanded.has(n.id); },
     setFocus(n) { setFocus(n); },
     clearFocus() { setFocus(null); },
+    applyFilter() { computeVisibility(); draw(); },
     pinNode(n, pin) { if (!n) return; n.pinned = (pin == null) ? !n.pinned : pin; if (n.pinned) { pinned.add(n.id); n.vx = 0; n.vy = 0; } else pinned.delete(n.id); draw(); },
     setMode3D(on) { MODE_3D = !!on; fitView(); draw(); },
     is3D() { return MODE_3D; },
