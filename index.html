@@ -1274,7 +1274,7 @@ function buildViewer() {
     return lines;
   }
 
-  function dim(n) { return focusMode && n !== selected && !selectedNeighbors.has(n.id); }
+  function dim(n) { return !!selected && n !== selected && !selectedNeighbors.has(n.id); }
 
   function draw() {
     ctx.save();
